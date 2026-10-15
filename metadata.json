@@ -1,0 +1,6 @@
+{
+  "name": "NOVA OS — Next-Generation Microkernel Operating System",
+  "description": "Independent next-generation microkernel operating system featuring capability-based security, isolated user-space drivers, formal ABI stability, and interactive developer environment.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
