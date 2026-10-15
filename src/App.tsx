@@ -47,7 +47,7 @@ interface SourceFileItem {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'console' | 'shell' | 'architecture' | 'tests' | 'source' | 'audit' | 'desktop'>('console');
+  const [activeTab, setActiveTab] = useState<'console' | 'shell' | 'architecture' | 'tests' | 'source' | 'docs' | 'audit' | 'desktop'>('console');
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [serialLog, setSerialLog] = useState<string>('');
@@ -56,6 +56,21 @@ export default function App() {
   const [sourceFiles, setSourceFiles] = useState<SourceFileItem[]>([]);
   const [selectedFile, setSelectedFile] = useState<string>('kernel/core/main.c');
   const [fileContent, setFileContent] = useState<string>('');
+  const [selectedDoc, setSelectedDoc] = useState<string>('README.md');
+  const [docContent, setDocContent] = useState<string>('');
+
+  const loadDoc = async (docPath: string) => {
+    setSelectedDoc(docPath);
+    try {
+      const res = await fetch(`/api/source-file?path=${encodeURIComponent(docPath)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDocContent(data.content);
+      }
+    } catch (e) {
+      setDocContent('# Failed to load documentation');
+    }
+  };
 
   // Interactive shell state
   const [shellHistory, setShellHistory] = useState<Array<{ type: 'input' | 'output' | 'error' | 'success'; text: string }>>([
@@ -110,6 +125,7 @@ export default function App() {
     fetchStatus();
     fetchSourceTree();
     loadSourceFile('kernel/core/main.c');
+    loadDoc('README.md');
   }, []);
 
   useEffect(() => {
@@ -471,8 +487,9 @@ Operating system suffered ZERO downtime.`
           { id: 'shell', label: 'موجه أوامر النواة (nova-sh)', icon: TerminalIcon },
           { id: 'architecture', label: 'الهندسة المعمارية ونموذج التهديد', icon: Layers },
           { id: 'tests', label: 'الاختبارات وقياس الأداء (Benchmark)', icon: Activity },
+          { id: 'docs', label: 'دليل ومواصفات النظام بالإنجليزية (Master Docs)', icon: BookOpen },
           { id: 'source', label: 'مستعرض الكود المصدري (C & ASM)', icon: Code2 },
-          { id: 'audit', label: 'فحص المستودع المرجعي (C&gt;)', icon: BookOpen },
+          { id: 'audit', label: 'فحص المستودع المرجعي (C&gt;)', icon: FileCode },
           { id: 'desktop', label: 'خارطة Wayland وGNOME/KDE', icon: GitBranch },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -872,6 +889,72 @@ Operating system suffered ZERO downtime.`
                   </span>
                 )}
               </pre>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Master English Documentation */}
+        {activeTab === 'docs' && (
+          <div className="space-y-6">
+            <div className="bg-slate-900/60 p-5 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-cyan-400" />
+                  NOVA OS Master Documentation & Technical Specifications (English)
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Exhaustive architectural specifications, implementation deep dives, threat models, and verified benchmark manuals in English.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-3 py-1 rounded">
+                  8 Complete Technical Markdown Guides Available
+                </span>
+              </div>
+            </div>
+
+            {/* Doc Switcher Buttons */}
+            <div className="flex flex-wrap gap-2 text-xs font-mono">
+              {[
+                { path: 'README.md', label: 'README.md (Master Spec & Overview)' },
+                { path: 'docs/KERNEL_CORE_DEEP_DIVE.md', label: 'KERNEL_CORE_DEEP_DIVE.md' },
+                { path: 'docs/USERSPACE_SERVERS_GUIDE.md', label: 'USERSPACE_SERVERS_GUIDE.md' },
+                { path: 'docs/TESTING_AND_BENCHMARKS.md', label: 'TESTING_AND_BENCHMARKS.md' },
+                { path: 'docs/ARCHITECTURE.md', label: 'ARCHITECTURE.md' },
+                { path: 'docs/SECURITY_THREAT_MODEL.md', label: 'SECURITY_THREAT_MODEL.md' },
+                { path: 'docs/ABI_SPECIFICATION.md', label: 'ABI_SPECIFICATION.md' },
+                { path: 'docs/GNOME_KDE_ROADMAP.md', label: 'GNOME_KDE_ROADMAP.md' },
+                { path: 'docs/REFERENCE_LANG_AUDIT.md', label: 'REFERENCE_LANG_AUDIT.md' },
+              ].map((doc) => (
+                <button
+                  key={doc.path}
+                  onClick={() => loadDoc(doc.path)}
+                  className={`px-3 py-1.5 rounded-lg border transition cursor-pointer ${
+                    selectedDoc === doc.path
+                      ? 'bg-cyan-950 text-cyan-300 font-bold border-cyan-700 shadow-md shadow-cyan-900/30'
+                      : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:bg-slate-800 hover:text-slate-200'
+                  }`}
+                >
+                  {doc.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Document Content Reader */}
+            <div className="bg-black border border-slate-800 rounded-xl p-6 font-mono text-xs overflow-hidden shadow-2xl flex flex-col min-h-[600px]">
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800 text-slate-400">
+                <div className="flex items-center gap-2 text-cyan-400 font-bold">
+                  <FileCode className="h-4 w-4" />
+                  <span>nova-os/{selectedDoc}</span>
+                </div>
+                <div className="text-[11px] text-slate-500">
+                  Authoritative Markdown Specification • UTF-8 English
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto max-h-[680px] p-2 text-slate-300 font-mono text-xs leading-relaxed select-text whitespace-pre-wrap">
+                {docContent || '// Loading documentation...'}
+              </div>
             </div>
           </div>
         )}

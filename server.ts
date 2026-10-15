@@ -135,7 +135,13 @@ app.get('/api/source-tree', (_req, res) => {
     return results;
   }
 
-  res.json({ files: getFiles(NOVA_OS_DIR) });
+  const files = getFiles(NOVA_OS_DIR);
+  const rootReadme = path.resolve(process.cwd(), 'README.md');
+  if (fs.existsSync(rootReadme)) {
+    files.unshift({ path: 'README.md', name: 'README.md', size: fs.statSync(rootReadme).size });
+  }
+
+  res.json({ files });
 });
 
 // GET /api/source-file: Read specific file
@@ -144,7 +150,10 @@ app.get('/api/source-file', (req, res) => {
   if (!relPath || relPath.includes('..')) {
     return res.status(400).send('Invalid file path');
   }
-  const fullPath = path.join(NOVA_OS_DIR, relPath);
+  let fullPath = path.join(NOVA_OS_DIR, relPath);
+  if (!fs.existsSync(fullPath)) {
+    fullPath = path.resolve(process.cwd(), relPath);
+  }
   if (!fs.existsSync(fullPath)) {
     return res.status(404).send('File not found');
   }
